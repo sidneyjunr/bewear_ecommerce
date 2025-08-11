@@ -1,7 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -22,55 +24,79 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
-const formSchema = z.object({
+const formSchema = z
+  .object({
     name: z.string("Nome Inválido.").trim().min(1, "Nome é obrigatório"),
-  email: z.email("Email Inválido."),
-  password: z
-    .string()
-    .min(8, { error: "A senha deve ter pelo menos 8 caracteres." })
-    .refine((val) => /[a-z]/.test(val), {
-      error: "A senha deve conter pelo menos uma letra minúscula.",
-    })
-    .refine((val) => /[A-Z]/.test(val), {
-      error: "A senha deve conter pelo menos uma letra maiúscula.",
-    })
-    .refine((val) => /\d/.test(val), {
-      error: "A senha deve incluir pelo menos um número.",
-    })
-    .refine((val) => /[!@#$%^&*()_+={}\[\]:;"'<>,.?\/\\|`~-]/.test(val), {
-      error:
-        "A senha deve conter caractere especial (por exemplo, @, #, $, etc.).",
-    })
-    .refine((val) => !/\s/.test(val), {
-      error: "A senha não pode conter espaços em branco.",
-  }),
-  passwordConfirmation:z.string().min(8.)
-  
-}).refine((data)=> {
-    return data.password === data.passwordConfirmation
-},{
-    error:"As senhas não coincidem",
-    path: ["passwordConfirmation"],
-});
+    email: z.email("Email Inválido."),
+    password: z
+      .string()
+      .min(8, { error: "A senha deve ter pelo menos 8 caracteres." })
+      .refine((val) => /[a-z]/.test(val), {
+        error: "A senha deve conter pelo menos uma letra minúscula.",
+      })
+      .refine((val) => /[A-Z]/.test(val), {
+        error: "A senha deve conter pelo menos uma letra maiúscula.",
+      })
+      .refine((val) => /\d/.test(val), {
+        error: "A senha deve incluir pelo menos um número.",
+      })
+      .refine((val) => /[!@#$%^&*()_+={}\[\]:;"'<>,.?\/\\|`~-]/.test(val), {
+        error:
+          "A senha deve conter caractere especial (por exemplo, @, #, $, etc.).",
+      })
+      .refine((val) => !/\s/.test(val), {
+        error: "A senha não pode conter espaços em branco.",
+      }),
+    passwordConfirmation: z.string().min(8),
+  })
+  .refine(
+    (data) => {
+      return data.password === data.passwordConfirmation;
+    },
+    {
+      error: "As senhas não coincidem",
+      path: ["passwordConfirmation"],
+    },
+  );
 
 type FormValues = z.infer<typeof formSchema>;
 
 const SignUpForm = () => {
+  const router = useRouter();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        name:"",
+      name: "",
       email: "",
       password: "",
-      passwordConfirmation:""
+      passwordConfirmation: "",
     },
     // mode: "onSubmit",
     // reValidateMode:"onSubmit"
   });
 
-  function onSubmit(values: FormValues) {
-    console.log("Formulário enviado com sucesso:", values);
+  async function onSubmit(values: FormValues) {
+    await authClient.signUp.email({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+        onError: (error) => {
+          if (error.error.code === "USER_ALREADY_EXISTS") {
+            toast.error("E-mail ou senha inválidos");
+            form.setError("email", {
+              message: "Email já cadastrado",
+            });
+            toast.error(error.error.message)
+          }
+        },
+      },
+    });
   }
 
   return (
@@ -103,7 +129,7 @@ const SignUpForm = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="Digite seu email" {...field} />
                     </FormControl>
