@@ -1,14 +1,12 @@
-import React from "react";
+import { Header } from "@/components/commom/header";
 
-import { Button } from "@/components/ui/button";
 
-const page = () => {
+const Home = () => {
   return (
-    <div>
-      <div>Home Page</div>
-      <Button>BootCamp</Button>
-    </div>
+    <>
+    <Header/>
+    </>
   );
 };
 
-export default page;
+export default Home;

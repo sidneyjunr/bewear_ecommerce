@@ -101,7 +101,7 @@ const SignUpForm = () => {
 
   return (
     <>
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Criar Conta</CardTitle>
           <CardDescription>Crie uma conta para continuar.</CardDescription>
@@ -109,7 +109,7 @@ const SignUpForm = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <CardContent className="grid gap-6">
+            <CardContent className="grid gap-6 w-full">
               <FormField
                 control={form.control}
                 name="name"
